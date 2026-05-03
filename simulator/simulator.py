@@ -48,13 +48,13 @@ def generate_temperature(anomaly=False):
     return round(base + noise, 2)
 
 def generate_gas(anomaly=False):
-    """Gas level normalized 0.0-1.0 — danger: >0.7"""
-    base = 0.2 + 0.3 * get_time_factor()
-    noise = random.gauss(0, 0.03)
+    """Gas level in ppm — normal: 0-200, danger: >350"""
+    base = 50 + 100 * get_time_factor()
+    noise = random.gauss(0, 15)
     value = base + noise
     if anomaly:
-        value += random.uniform(0.3, 0.5)
-    return round(max(0.0, min(1.0, value)), 3)
+        value += random.uniform(150, 300)
+    return round(max(0, min(700, value)), 2)
 
 def should_trigger_anomaly(anomaly_probability=0.05):
     """5% chance of anomaly at each cycle"""

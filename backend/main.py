@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from contextlib import asynccontextmanager
+from datetime import datetime
 import sys, os, json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -132,3 +133,28 @@ def get_alert_stats(db: Session = Depends(get_db)):
             for s in ["co2", "temperature", "gas"]
         }
     }
+
+# ── Actuator Control Endpoints ───────────────────────────────
+@app.post("/actuators/vent")
+async def control_vent(enabled: bool):
+    """Control ventilation system"""
+    message = {
+        "type": "actuator_command",
+        "device": "vent",
+        "enabled": enabled,
+        "timestamp": datetime.now().isoformat()
+    }
+    await manager.broadcast(message)
+    return {"status": "ok", "device": "vent", "enabled": enabled}
+
+@app.post("/actuators/alarm")
+async def control_alarm(enabled: bool):
+    """Control alarm system"""
+    message = {
+        "type": "actuator_command",
+        "device": "alarm",
+        "enabled": enabled,
+        "timestamp": datetime.now().isoformat()
+    }
+    await manager.broadcast(message)
+    return {"status": "ok", "device": "alarm", "enabled": enabled}

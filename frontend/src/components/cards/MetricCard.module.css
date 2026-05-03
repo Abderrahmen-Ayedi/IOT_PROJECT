@@ -1,0 +1,80 @@
+.card {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  animation: fadeIn 0.4s ease;
+}
+
+.card.warn {
+  border-color: var(--amber-border);
+  box-shadow: 0 0 0 3px rgba(186, 117, 23, 0.07);
+}
+
+.card.danger {
+  border-color: var(--red-border);
+  box-shadow: 0 0 0 3px rgba(226, 75, 74, 0.08);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1;
+  font-family: var(--font-mono);
+  letter-spacing: -1px;
+}
+
+.unit {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: 3px;
+}
+
+.barTrack {
+  margin-top: 12px;
+  height: 4px;
+  background: var(--color-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s ease, background 0.3s;
+}
+
+.threshold {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+}

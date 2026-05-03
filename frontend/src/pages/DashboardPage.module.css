@@ -1,0 +1,54 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+/* ── Metric cards ── */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .metricsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 500px) {
+  .metricsGrid { grid-template-columns: 1fr; }
+}
+
+/* ── Charts ── */
+.chartsRow {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 800px) {
+  .chartsRow { grid-template-columns: 1fr; }
+}
+
+/* ── Bottom ── */
+.bottomRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 800px) {
+  .bottomRow { grid-template-columns: 1fr; }
+}
+
+/* Right column: predictions + actuators stacked */
+.rightCol {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
