@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useSensorData } from "@/hooks/useSensorData";
 import Topbar          from "@/components/layout/Topbar";
 import MetricCard      from "@/components/cards/MetricCard";
@@ -17,6 +18,73 @@ export default function DashboardPage() {
     vent, alarm, connected,
     toggleVent, toggleAlarm,
   } = useSensorData();
+
+  const audioCtxRef = useRef(null);
+  const oscillatorRef = useRef(null);
+
+  useEffect(() => {
+    if (alarm) {
+      document.body.classList.add("alarm-active");
+      
+      try {
+        if (!audioCtxRef.current) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current.state === "suspended") {
+          audioCtxRef.current.resume();
+        }
+
+        const osc = audioCtxRef.current.createOscillator();
+        const gain = audioCtxRef.current.createGain();
+        const lfo = audioCtxRef.current.createOscillator();
+        const lfoGain = audioCtxRef.current.createGain();
+        
+        osc.type = "square";
+        osc.frequency.value = 600;
+        
+        lfo.type = "square";
+        lfo.frequency.value = 2; // 2 alternations per second
+        lfoGain.gain.value = 200; // Pitch difference
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        
+        gain.gain.value = 0.05; // Low volume
+        osc.connect(gain);
+        gain.connect(audioCtxRef.current.destination);
+        
+        osc.start();
+        lfo.start();
+        
+        oscillatorRef.current = { osc, lfo, gain };
+      } catch (e) {
+        console.warn("Audio playback failed", e);
+      }
+    } else {
+      document.body.classList.remove("alarm-active");
+      if (oscillatorRef.current) {
+        try {
+          oscillatorRef.current.osc.stop();
+          oscillatorRef.current.lfo.stop();
+          oscillatorRef.current.osc.disconnect();
+        } catch (e) {}
+        oscillatorRef.current = null;
+      }
+    }
+
+    return () => {
+      document.body.classList.remove("alarm-active");
+      if (oscillatorRef.current) {
+        try {
+          oscillatorRef.current.osc.stop();
+          oscillatorRef.current.lfo.stop();
+          oscillatorRef.current.osc.disconnect();
+        } catch (e) {}
+        oscillatorRef.current = null;
+      }
+    };
+  }, [alarm]);
 
   return (
     <div className={styles.page}>

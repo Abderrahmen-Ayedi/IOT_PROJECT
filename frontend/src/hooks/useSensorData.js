@@ -21,7 +21,7 @@ export function useSensorData() {
   const [clock,      setClock]      = useState("--:--:--");
   const [readings,   setReadings]   = useState({ co2: null, gas: null, temp: null, hum: null });
   const [scenario,   setScenario]   = useState("ok");
-  const [predictions,setPredictions]= useState({ co2: null, gas: null, anomaly: false, risk: "Faible", state: "ok" });
+  const [predictions,setPredictions]= useState({ co2: null, gas: null, anomaly: false, risk: "Faible", state: "ok", pm25: null });
   const [aqi,        setAqi]        = useState(0);
   const [co2History, setCo2History] = useState([]);
   const [gasHistory, setGasHistory] = useState([]);
@@ -97,7 +97,9 @@ export function useSensorData() {
     setScenario(sc);
 
     // ── Predictions
-    setPredictions(computePredictions(data, sc));
+    const computedPreds = computePredictions(data, sc);
+    computedPreds.pm25 = lastMessage.pm25_prediction ?? null;
+    setPredictions(computedPreds);
 
     // ── Alert logic on scenario change
     if (sc !== lastScene.current) {

@@ -2,6 +2,9 @@
 
 import paho.mqtt.client as mqtt
 import json, sys, os, asyncio
+import pickle
+import random
+import pandas as pd
 
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -10,6 +13,18 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from config import *
 from backend.database import SessionLocal, SensorReading, Alert
+
+# ─────────────────────────────────────────────────────────────
+# ML Model
+# ─────────────────────────────────────────────────────────────
+MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'xgb_industrial_model.pkl'))
+try:
+    with open(MODEL_PATH, 'rb') as f:
+        ml_model = pickle.load(f)
+    print("✅ ML Model loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load ML Model: {e}")
+    ml_model = None
 
 # ─────────────────────────────────────────────────────────────
 # InfluxDB Configuration
@@ -148,6 +163,11 @@ last_readings = {
     "temperature": None,
     "humidity": None,
     "gas": None,
+    "pm10": None,
+    "ch4": None,
+    "vocs": None,
+    "co": None,
+    "wind_direction": None,
     "timestamp": None
 }
 
@@ -165,7 +185,12 @@ def build_broadcast(payload, status):
         "co2": "co2",
         "temperature": "temperature",
         "humidity": "humidity",
-        "gas": "gas"
+        "gas": "gas",
+        "pm10": "pm10",
+        "ch4": "ch4",
+        "vocs": "vocs",
+        "co": "co",
+        "wind_direction": "wind_direction"
     }
     
     sensor_name = payload["sensor"].lower()
@@ -174,6 +199,28 @@ def build_broadcast(payload, status):
     
     last_readings["timestamp"] = payload["timestamp"]
 
+    # ML Prediction
+    pm25_pred = None
+    if ml_model is not None:
+        feature_mapping = {
+            'PM10': last_readings["pm10"],
+            'CO2': last_readings["co2"],
+            'CH4': last_readings["ch4"],
+            'VOCs': last_readings["vocs"],
+            'CO': last_readings["co"],
+            'Temperature': last_readings["temperature"],
+            'Humidity': last_readings["humidity"],
+            'Wind_Direction': last_readings["wind_direction"]
+        }
+        
+        if all(v is not None for v in feature_mapping.values()):
+            try:
+                df = pd.DataFrame([feature_mapping])
+                pred = ml_model.predict(df)[0]
+                pm25_pred = round(float(pred), 2)
+            except Exception as e:
+                print(f"❌ ML Prediction error: {e}")
+
     # Return consolidated data with all latest readings
     return {
         "type": "sensor_update",
@@ -181,6 +228,12 @@ def build_broadcast(payload, status):
         "temperature": last_readings["temperature"],
         "humidity": last_readings["humidity"],
         "gas": last_readings["gas"],
+        "pm10": last_readings["pm10"],
+        "ch4": last_readings["ch4"],
+        "vocs": last_readings["vocs"],
+        "co": last_readings["co"],
+        "wind_direction": last_readings["wind_direction"],
+        "pm25_prediction": pm25_pred,
         "timestamp": last_readings["timestamp"],
         "alert": status,
         "sensor": sensor_name,
@@ -191,13 +244,20 @@ def build_broadcast(payload, status):
 # MQTT Callbacks
 # ─────────────────────────────────────────────────────────────
 
+VENTILATION_ENABLED = False
+
 def make_on_message(manager, loop):
 
     def on_message(client, userdata, msg):
-
+        global VENTILATION_ENABLED
         try:
 
             payload = json.loads(msg.payload.decode())
+
+            # ── SIMULATED COOLING OVERRIDE ──
+            if payload.get("sensor", "").lower() == "temperature" and VENTILATION_ENABLED:
+                if payload.get("value", 0) > 39.0:
+                    payload["value"] = round(random.uniform(38.0, 39.0), 2)
 
             status = save_reading(payload)
 

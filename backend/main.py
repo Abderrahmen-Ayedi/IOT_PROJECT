@@ -3,14 +3,17 @@ from fastapi import FastAPI, Depends, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from datetime import datetime
 import sys, os, json
+import paho.mqtt.publish as mqtt_publish
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import *
 from backend.database import get_db, init_db, SensorReading, Alert
 from backend.mqtt_subscriber import start_mqtt_subscriber
+import backend.mqtt_subscriber as mqtt_sub
 
 # ── WebSocket Connection Manager ─────────────────────────────────
 class ConnectionManager:
@@ -135,9 +138,14 @@ def get_alert_stats(db: Session = Depends(get_db)):
     }
 
 # ── Actuator Control Endpoints ───────────────────────────────
+class ActuatorCommand(BaseModel):
+    enabled: bool
+
 @app.post("/actuators/vent")
-async def control_vent(enabled: bool):
+async def control_vent(cmd: ActuatorCommand):
     """Control ventilation system"""
+    enabled = cmd.enabled
+    mqtt_sub.VENTILATION_ENABLED = enabled
     message = {
         "type": "actuator_command",
         "device": "vent",
@@ -145,11 +153,16 @@ async def control_vent(enabled: bool):
         "timestamp": datetime.now().isoformat()
     }
     await manager.broadcast(message)
+    try:
+        mqtt_publish.single("factory/actuators/vent", payload=json.dumps({"enabled": enabled}), hostname=BROKER_HOST, port=BROKER_PORT)
+    except Exception as e:
+        print(f"❌ Failed to publish MQTT actuator message: {e}")
     return {"status": "ok", "device": "vent", "enabled": enabled}
 
 @app.post("/actuators/alarm")
-async def control_alarm(enabled: bool):
+async def control_alarm(cmd: ActuatorCommand):
     """Control alarm system"""
+    enabled = cmd.enabled
     message = {
         "type": "actuator_command",
         "device": "alarm",
@@ -157,4 +170,8 @@ async def control_alarm(enabled: bool):
         "timestamp": datetime.now().isoformat()
     }
     await manager.broadcast(message)
+    try:
+        mqtt_publish.single("factory/actuators/alarm", payload=json.dumps({"enabled": enabled}), hostname=BROKER_HOST, port=BROKER_PORT)
+    except Exception as e:
+        print(f"❌ Failed to publish MQTT actuator message: {e}")
     return {"status": "ok", "device": "alarm", "enabled": enabled}

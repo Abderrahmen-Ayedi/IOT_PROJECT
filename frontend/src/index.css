@@ -80,3 +80,14 @@ html, body, #root {
 
 .animate-slide-in { animation: slideIn 0.3s ease; }
 .animate-fade-in  { animation: fadeIn 0.4s ease; }
+
+@keyframes alarmFlash {
+  0% { box-shadow: inset 0 0 0 0 rgba(226, 75, 74, 0); }
+  50% { box-shadow: inset 0 0 100px 20px rgba(226, 75, 74, 0.4); background-color: rgba(226, 75, 74, 0.05); }
+  100% { box-shadow: inset 0 0 0 0 rgba(226, 75, 74, 0); }
+}
+
+body.alarm-active {
+  animation: alarmFlash 1.5s infinite;
+  transition: all 0.3s ease;
+}

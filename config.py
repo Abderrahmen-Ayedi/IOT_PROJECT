@@ -8,6 +8,12 @@ BROKER_PORT = 1883
 TOPIC_CO2 = "factory/sensors/co2"
 TOPIC_TEMPERATURE = "factory/sensors/temperature"
 TOPIC_GAS = "factory/sensors/gas"
+TOPIC_PM10 = "factory/sensors/pm10"
+TOPIC_CH4 = "factory/sensors/ch4"
+TOPIC_VOCS = "factory/sensors/vocs"
+TOPIC_CO = "factory/sensors/co"
+TOPIC_HUMIDITY = "factory/sensors/humidity"
+TOPIC_WIND_DIR = "factory/sensors/wind_direction"
 TOPIC_ALL = "factory/sensors/#"  # wildcard — receives all sensor topics
 
 # Simulation settings

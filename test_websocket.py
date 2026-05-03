@@ -10,6 +10,6 @@ async def test():
         while True:
             msg = await ws.recv()
             data = json.loads(msg)
-            print(f"📨 {data['sensor']} : {data['value']} | alert: {data['alert']}")
+            print(f"📨 {data['sensor']} : {data['value']} | alert: {data['alert']} | pm25: {data.get('pm25_prediction')}")
 
 asyncio.run(test())
