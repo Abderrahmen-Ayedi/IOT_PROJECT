@@ -21,9 +21,9 @@ MODEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'xgb_
 try:
     with open(MODEL_PATH, 'rb') as f:
         ml_model = pickle.load(f)
-    print("✅ ML Model loaded successfully")
+    print("[OK] ML Model loaded successfully")
 except Exception as e:
-    print(f"❌ Failed to load ML Model: {e}")
+    print(f"[ERROR] Failed to load ML Model: {e}")
     ml_model = None
 
 # ─────────────────────────────────────────────────────────────
@@ -141,13 +141,13 @@ def save_reading(payload):
             record=point
         )
 
-        print(f"📈 Written to InfluxDB → {payload['sensor']} : {payload['value']}")
+        print(f"[DB] Written to InfluxDB -> {payload['sensor']} : {payload['value']}")
 
         return status
 
     except Exception as e:
 
-        print(f"❌ DB error : {e}")
+        print(f"[DB ERROR] DB error : {e}")
         db.rollback()
         return None
 
@@ -219,7 +219,7 @@ def build_broadcast(payload, status):
                 pred = ml_model.predict(df)[0]
                 pm25_pred = round(float(pred), 2)
             except Exception as e:
-                print(f"❌ ML Prediction error: {e}")
+                print(f"[ERROR] ML Prediction error: {e}")
 
     # Return consolidated data with all latest readings
     return {
@@ -257,7 +257,9 @@ def make_on_message(manager, loop):
             # ── SIMULATED COOLING OVERRIDE ──
             if payload.get("sensor", "").lower() == "temperature" and VENTILATION_ENABLED:
                 if payload.get("value", 0) > 39.0:
+                    old_val = payload["value"]
                     payload["value"] = round(random.uniform(38.0, 39.0), 2)
+                    print(f"[VENT OVERRIDE] Dropped Temp from {old_val} to {payload['value']} C")
 
             status = save_reading(payload)
 
@@ -270,13 +272,13 @@ def make_on_message(manager, loop):
             )
 
             print(
-                f"💾 Saved + broadcast → "
+                f"[SAVE] Saved + broadcast -> "
                 f"{payload['sensor']} : {payload['value']}"
             )
 
         except Exception as e:
 
-            print(f"❌ Error : {e}")
+            print(f"[ERROR] Error : {e}")
 
     return on_message
 
@@ -284,13 +286,13 @@ def on_connect(client, userdata, flags, rc):
 
     if rc == 0:
 
-        print("✅ MQTT Subscriber connected")
+        print("[MQTT] Subscriber connected")
 
         client.subscribe(TOPIC_ALL)
 
     else:
 
-        print(f"❌ Connection failed : {rc}")
+        print(f"[ERROR] Connection failed : {rc}")
 
 # ─────────────────────────────────────────────────────────────
 # Start subscriber
@@ -314,4 +316,4 @@ def start_mqtt_subscriber(manager):
 
     client.loop_start()
 
-    print("📡 MQTT Subscriber running in background...")
+    print("[MQTT] Subscriber running in background...")

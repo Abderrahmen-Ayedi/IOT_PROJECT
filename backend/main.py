@@ -23,11 +23,11 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        print(f"🔌 New WebSocket client — total: {len(self.active_connections)}")
+        print(f"[WS] New WebSocket client - total: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
-        print(f"🔌 Client disconnected — total: {len(self.active_connections)}")
+        print(f"[WS] Client disconnected - total: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
         """Send data to ALL connected clients"""
@@ -47,11 +47,11 @@ manager = ConnectionManager()
 # ── Startup / Shutdown ───────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Starting FastAPI...")
+    print("[START] Starting FastAPI...")
     init_db()
     start_mqtt_subscriber(manager)   # pass manager so MQTT can broadcast
     yield
-    print("🛑 Shutting down...")
+    print("[STOP] Shutting down...")
 
 # ── App ──────────────────────────────────────────────────────────
 app = FastAPI(
